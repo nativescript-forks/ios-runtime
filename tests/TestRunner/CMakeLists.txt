@@ -1,3 +1,4 @@
+    cmake_policy(VERSION 3.1)
 set(RESOURCES app)
 
 include(CreateNativeScriptApp)

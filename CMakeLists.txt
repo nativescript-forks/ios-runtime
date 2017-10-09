@@ -1,4 +1,8 @@
+    cmake_policy(VERSION 3.1)
 cmake_minimum_required(VERSION 3.1)
+
+cmake_policy(VERSION 3.1)
+
 project(NativeScript)
 
 set(CMAKE_XCODE_ATTRIBUTE_SDKROOT "iphoneos")

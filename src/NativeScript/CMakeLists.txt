@@ -1,3 +1,4 @@
+    cmake_policy(VERSION 3.1)
 set(HEADER_FILES
     Calling/FFICall.h
     Calling/FFICallback.h

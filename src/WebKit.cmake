@@ -1,3 +1,5 @@
+cmake_policy(VERSION 3.1.3)
+
 set(WEBKIT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/src/WebKit")
 set(WTF_SOURCE_DIR "${WEBKIT_SOURCE_DIR}/Source/WTF")
 set(JavaScriptCore_SOURCE_DIR "${WEBKIT_SOURCE_DIR}/Source/JavaScriptCore")
