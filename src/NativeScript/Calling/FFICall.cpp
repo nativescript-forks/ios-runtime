@@ -8,11 +8,16 @@
 
 #include "FFICall.h"
 #include "FFICache.h"
+#include "ObjCTypes.h"
 #include <JavaScriptCore/Interpreter.h>
+#include <JavaScriptCore/JSObjectRef.h>
 #include <JavaScriptCore/JSPromiseDeferred.h>
 #include <JavaScriptCore/StrongInlines.h>
+#include <JavaScriptCore/runtime/Error.h>
 #include <dispatch/dispatch.h>
 #include <malloc/malloc.h>
+
+#import "TNSRuntime.h"
 
 namespace NativeScript {
 using namespace JSC;
@@ -122,10 +127,26 @@ EncodedJSValue JSC_HOST_CALL FFICall::call(ExecState* execState) {
     }
 
     {
-        JSLock::DropAllLocks locksDropper(execState);
-        ffi_call(callee->_cif.get(), FFI_FN(invocation.function), invocation._buffer + callee->_returnOffset, reinterpret_cast<void**>(invocation._buffer + callee->_argsArrayOffset));
-    }
+        @try {
+            JSLock::DropAllLocks locksDropper(execState);
+            ffi_call(callee->_cif.get(), FFI_FN(invocation.function), invocation._buffer + callee->_returnOffset, reinterpret_cast<void**>(invocation._buffer + callee->_argsArrayOffset));
+        }
+        @catch (NSException* exception) {
+            TNSRuntime* runtime = [TNSRuntime current];
+            JSGlobalContextRef context = runtime.globalContext;
+            JSStringRef reason = JSStringCreateWithUTF8CString([[exception reason] UTF8String]);
+            JSObject* error = createError(execState, [[exception reason] UTF8String]);
+            JSStringRelease(reason);
 
+            JSValueRef wrappedException = [runtime convertObject:exception];
+            JSStringRef nativeExceptionPropertyName = JSStringCreateWithUTF8CString("nativeException");
+            JSObjectSetProperty(context, (JSObjectRef)error, nativeExceptionPropertyName,
+                                wrappedException, kJSPropertyAttributeNone, NULL);
+            JSStringRelease(nativeExceptionPropertyName);
+
+            return throwVMError(execState, scope, error);
+        }
+    }
     JSValue result = callee->_returnType.read(execState, invocation._buffer + callee->_returnOffset, callee->_returnTypeCell.get());
 
     if (InvocationHook post = callee->_invocationHooks.post) {
